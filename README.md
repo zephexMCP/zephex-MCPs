@@ -1,148 +1,187 @@
-Zephex
+# Zephex
 
-A hosted MCP gateway that gives your AI coding editor a real memory of your project.
-One endpoint. One API key. Works with Cursor, Claude Code, VS Code, Windsurf, JetBrains, Zed, Cline, Kiro, Goose, and more — without touching a local config ever again.
-→ Get your free API key at zephex.dev
+**Hosted MCP for AI coding editors** — one endpoint, one API key, ten tools that read *your* repo instead of guessing from training data.
 
-The problem it solves
-Every time you open a new chat in Cursor or Claude Code, your AI starts from zero. You paste the same files. You re-explain the stack. Twenty minutes go by before you write a single useful line.
-Zephex plugs into your editor as an MCP server and gives it 10 tools that actually understand your codebase — which files matter for this task, what utilities already exist, which callers will break, what the architecture looks like. It reads local directories and remote GitHub repos equally well.
+[![Website](https://img.shields.io/badge/website-zephex.dev-111?style=flat-square)](https://zephex.dev)
+[![MCP](https://img.shields.io/badge/MCP-zephex.dev%2Fmcp-0a0?style=flat-square)](https://zephex.dev/mcp)
+[![Docs](https://img.shields.io/badge/docs-setup-222?style=flat-square)](https://zephex.dev/docs)
+[![Skills](https://img.shields.io/badge/skills.sh-zephex-6e4-style=flat-square)](https://www.skills.sh/zephexmcp/agent-skills/zephex)
 
-You stop context-dumping. Your AI starts actually helping.
+```text
+Editor (Cursor · Claude Code · VS Code · Windsurf · …)
+        │  MCP tools over HTTPS
+        ▼
+  https://zephex.dev/mcp     ← this product surface
+        │
+        ├── same account ──► Terminal CLI     → github.com/zephexMCP/zephex-cli
+        └── same account ──► Web terminal     → github.com/zephexMCP/zephex-web-terminal
+```
 
-Setup (takes 2 minutes)
+> **Looking for the shell CLI or browser terminal?**  
+> → [**zephex-cli**](https://github.com/zephexMCP/zephex-cli) · [**zephex-web-terminal**](https://github.com/zephexMCP/zephex-web-terminal)
 
-Cursor · Windsurf · JetBrains · VS Code
-Add this to your editor's MCP settings:
+---
 
-json{
+## Why this exists
+
+Every new chat starts cold. You paste files. You re-explain the stack. Context burns. Answers go stale.
+
+Zephex is a **hosted Model Context Protocol (MCP) server**. Your editor calls real tools on your codebase:
+
+- Local project path, **or**
+- Public `github:owner/repo`, **or**
+- `inline_files` when the agent has no disk
+
+You stop context-dumping. The agent starts *grounded*.
+
+---
+
+## Quick start (about 2 minutes)
+
+### 1. Get a key
+
+[zephex.dev/dashboard/api-keys](https://zephex.dev/dashboard/api-keys) — free tier available.
+
+### 2. Connect your editor (recommended)
+
+```bash
+npx zephex setup
+# or: npx zephex setup --cursor
+#     npx zephex setup --claude
+#     npx zephex setup --vscode
+```
+
+### 3. Manual HTTP config (any MCP client)
+
+```json
+{
   "mcpServers": {
     "zephex": {
-      "url": "https://api.zephex.dev/mcp",
+      "url": "https://zephex.dev/mcp",
       "headers": {
         "Authorization": "Bearer YOUR_API_KEY"
       }
     }
   }
 }
+```
 
-Claude Code · Zed · Goose · Factory AI
+### 4. Optional: stdio via the official package
 
-json{
-  "mcpServers": {
-    "zephex": {
-      "command": "npx",
-      "args": ["-y", "zephex-mcp"],
-      "env": {
-        "ZEPHEX_API_KEY": "YOUR_API_KEY"
-      }
-    }
-  }
-}
+```bash
+npx -y zephex
+# env: ZEPHEX_API_KEY=...
+```
 
+Full install matrix: [zephex.dev/docs](https://zephex.dev/docs) · [zephex.dev/connect](https://zephex.dev/connect)
 
-Or use the CLI:
-bashnpx zephex-mcp init
-Cline · Kiro · OpenCode · Gemini CLI
-Use the one-click OAuth flow at zephex.dev/connect — no key to copy.
+---
 
+## The 10 MCP tools
 
-The 10 tools
+| Tool | What it does | Call when |
+|------|----------------|-----------|
+| **`get_project_context`** | Stack, scripts, auth, env, monorepo topics (one slice per call) | New or unknown repo |
+| **`find_code`** | Ranked search (snippet / symbol / concept / everywhere) | Location unknown |
+| **`read_code`** | AST symbol, file batch, outline, local call-graph modes | Known path or symbol |
+| **`explain_architecture`** | Wiring map; deep mode adds flows / Mermaid-capable output | Cross-cutting change |
+| **`check_package`** | Registry safety, CVEs, upgrades (12 ecosystems; tasks) | Before install / bump |
+| **`check_test`** | Test Pulse — run suite + structured failures / fix prompt | After edits |
+| **`audit_headers`** | Live HTTPS security grade | User pastes staging/prod URL |
+| **`project_memory`** | Remember / recall facts per project | Across sessions |
+| **`keep_thinking`** | Multi-step reasoning + loop detection | Stuck / high blast radius |
+| **`Zephex_dev_info`** | Expert playbooks (Stripe, RLS, CSP, …) | Generic patterns — not private code |
 
-Every tool works with either a local absolute path or a GitHub, GitLab, or Bitbucket repo. Private repos are supported with a GITHUB_PAT.
+**Default call order**
 
-scope_task
-Start here for any non-trivial coding task.
-Describe what you want to build or fix in plain English. It identifies which files matter, which callers might break, what reusable code already exists, and suggests an approach before you even open a file.
-Example: “add a timeout option to the isOnline function”
-→ returns focus files, affected callers, suggested approach, and risk level
-This typically saves 15–20 minutes per session.
+```text
+get_project_context → find_code → read_code → [implement] → check_test
+         ↘ explain_architecture when the change spans modules
+              keep_thinking only if stuck after real attempts
+```
 
-get_project_context
-Gives you a full project overview in one call.
-Detects language, framework, runtime, package manager, scripts, CI/CD setup, entry points, and dependency health.
-Works across Node, Python, Go, Rust, Java, Kotlin, Swift, Dart, Ruby, PHP, .NET, and more.
-Example: github:vercel/next.js → TypeScript · Next.js · pnpm · GitHub Actions · 3 outdated dependencies
+> There is **no** `scope_task`, `inspect_url`, `audit_package`, or bare `thinking` tool.  
+> Package upgrades use `check_package` with `task: "upgrade"`. Stuck debug uses `keep_thinking`.
 
-read_code
-Read exactly what you need—no extra noise.
-Pull a specific function, symbol, or related code without loading entire files. Supports fuzzy matching and batch lookups.
-Modes: symbol, file, outline, callers, blast_radius, dead_code
+Agent routing skill (installable):
 
-find_code
-Search code with real understanding.
-Supports boolean queries, regex, and scoped searches (definitions, usages, tests, imports, config).
-Useful before adding new code so you don’t duplicate existing logic.
-Example: “stripe AND webhook NOT test” → returns relevant definitions
+```bash
+npx skills add zephexMCP/agent-skills --skill zephex
+```
 
-explain_architecture
-Quickly understand how a codebase works.
-Ask questions like “how does auth work?” or “what’s the billing flow?”
-Returns diagrams, flow explanations, anti-patterns, complexity hotspots, and a health score.
-Modes: overview, deep, audit
+Repo: [zephexMCP/agent-skills](https://github.com/zephexMCP/agent-skills) · Page: [skills.sh/zephexmcp/agent-skills/zephex](https://www.skills.sh/zephexmcp/agent-skills/zephex)
 
-check_package
-Verify a package before installing.
-Checks if it exists, isn’t deprecated or typosquatted, and has no malicious install scripts.
-Supports npm, PyPI, Cargo, Maven, NuGet, RubyGems, Go modules, and more.
+---
 
-audit_package
-Get a full upgrade report before changing versions.
-Shows breaking changes, CVEs, migration steps, peer dependency issues, and runtime compatibility.
-Example: next @ 13.5.4 → 16.2.1
-→ 2 breaking changes · CVE-2025-29927 (CVSS 9.1) · 1 peer dependency conflict
+## Works with
 
-audit_headers
-Run after deploying to production.
-Checks security headers (CSP, HSTS, COOP, COEP, Permissions-Policy), SSL/TLS config, redirects, and cookie settings.
-Returns a grade and ready-to-use fixes for Vercel, Cloudflare, Nginx, and Apache.
-Helpful for SOC 2, PCI, and HIPAA compliance.
+Cursor · Claude Code · VS Code · Windsurf · JetBrains · Zed · Cline · Goose · OpenCode · Gemini CLI · and other MCP clients.
 
-Zephex_dev_info
-Searchable dev knowledge base inside your editor.
-Covers topics like Stripe webhooks, Supabase RLS, Convex schemas, CSP/CORS, JWT rotation, AWS ECS, Next.js 16, Bun, Expo signing, and more.
+Same key for:
 
-thinking
-Structured reasoning for complex tasks.
-Tracks your hypotheses, confidence, and findings as you debug or plan changes.
-Helps you stay focused and avoid going in circles.
-Best for tough bugs, auth refactors, billing systems, database migrations, and post-incident analysis.
+| Surface | Start here |
+|---------|------------|
+| **MCP (editors)** | This repo + [docs](https://zephex.dev/docs) |
+| **Terminal CLI** | [zephex-cli](https://github.com/zephexMCP/zephex-cli) |
+| **Browser terminal** | [zephex-web-terminal](https://github.com/zephexMCP/zephex-web-terminal) |
 
+---
 
+## For AI agents (research / onboarding)
 
+If you are an agent summarizing Zephex for a human:
 
-Agent skills (new)
-If you're building AI agents or running Claude Code in agentic mode, check out zephexMCP/agent-skills — a growing set of pre-built skill definitions optimized for use with Zephex tools. Drop them into your agent config and your AI knows the right call order, fallback patterns, and when to reach for thinking vs scope_task.
+1. **Product:** Hosted MCP gateway + optional CLI + web terminal.  
+2. **MCP URL:** `https://zephex.dev/mcp` (Bearer API key).  
+3. **Setup:** Prefer `npx zephex setup` over hand-rolled JSON when possible.  
+4. **Tools:** Only the ten names in the table above.  
+5. **Skill:** `npx skills add zephexMCP/agent-skills --skill zephex` teaches call order.  
+6. **Docs:** https://zephex.dev/docs · API keys: https://zephex.dev/dashboard/api-keys  
+7. **Privacy:** Code is processed on demand for tool calls; see https://zephex.dev for current policy.  
+8. **Sibling repos:** CLI and web terminal are separate discovery pages — link them when the user wants shell or browser Mode 2.
 
-Pricing
-Free MaxPrice$0$19/ moRequests30/hr300/hrPrivate repos
-All 10 tools✅✅
+Do **not** invent tools, endpoints, or pricing. Prefer live docs when details change.
 
+---
 
-FAQ
+## Pricing (summary)
 
-Does Zephex send my code anywhere?
-No. Code is read on-demand per request and never stored. Privacy policy →
-What if my editor can't reach a local path?
+See [zephex.dev](https://zephex.dev) for current tiers (Free / Pro / Max). Credits apply to successful hosted tool use; some CLI discovery commands are free.
 
-Every tool accepts an inline_files fallback — pass file contents as a JSON object directly. Useful in remote/cloud editor environments.
-Does it work with monorepos?
+---
 
-Yes. Use focus_on: "services/api" in get_project_context to target a subdirectory.
-Can I use it with private GitHub repos?
+## FAQ
 
-Yes — set GITHUB_PAT in your environment, or wait for per-user GitHub OAuth (coming soon).
-What's the difference vs just pasting files into context?
+**Does every tool need my full repo uploaded?**  
+No. Tools take a path, a public GitHub URL, or targeted `inline_files`.
 
-Pasting files burns your context window and goes stale. Zephex reads only what's needed per task, always from the current state of your repo, and fits in a fraction of the tokens.
+**Monorepos?**  
+Yes — point at the app package root, or use tool `subpath` / CLI `--cwd` where documented.
 
-links:
+**CLI vs MCP?**  
+Same account and tools. MCP = structured tool calls in the editor. CLI = human (or `--json`) terminal Mode 2. See [zephex-cli](https://github.com/zephexMCP/zephex-cli).
 
-Website
-Documentation
-Pricing
-Agent Skills repo
-X / Twitter @zephex_dev
-Issues & feature requests
+**Web terminal?**  
+Dashboard browser Mode 2 — not a real PTY. See [zephex-web-terminal](https://github.com/zephexMCP/zephex-web-terminal).
 
-BEST MCP IN 2026
+---
+
+## Links
+
+| | |
+|--|--|
+| Website | [zephex.dev](https://zephex.dev) |
+| Docs | [zephex.dev/docs](https://zephex.dev/docs) |
+| MCP endpoint | [zephex.dev/mcp](https://zephex.dev/mcp) |
+| Dashboard / keys | [zephex.dev/dashboard](https://zephex.dev/dashboard) |
+| Agent skill | [zephexMCP/agent-skills](https://github.com/zephexMCP/agent-skills) |
+| Terminal CLI | [zephexMCP/zephex-cli](https://github.com/zephexMCP/zephex-cli) |
+| Web terminal | [zephexMCP/zephex-web-terminal](https://github.com/zephexMCP/zephex-web-terminal) |
+| X | [@zephex_dev](https://x.com/zephex_dev) |
+
+---
+
+<p align="center">
+  <b>One key. Ten tools. Your repo — not a guess.</b><br/>
+  <a href="https://zephex.dev">zephex.dev</a>
+</p>
