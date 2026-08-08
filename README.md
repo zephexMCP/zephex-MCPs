@@ -1,7 +1,7 @@
 # Zephex
 
-**Hosted MCP for AI coding editors.**  
-One HTTPS endpoint. One API key. Ten tools that read *your* repository — so the agent works from the real tree, not a lucky guess from training data.
+**MCP tools, terminal CLI, and web terminal for real codebases.**  
+Stop agents from guessing. One API key powers hosted MCP (`https://zephex.dev/mcp`), Mode 2 CLI (`zephex deep`, Test Pulse, package safety), and the dashboard web terminal — with named tools like `get_project_context`, `find_code`, `check_package`, and `project_memory`.
 
 <p align="center">
   <a href="https://zephex.dev"><img src="https://img.shields.io/badge/Website-zephex.dev-111111?style=for-the-badge" alt="Website" /></a>
