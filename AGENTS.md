@@ -1,29 +1,26 @@
-# Research notes — Zephex MCP (this repo only)
+# For AI research — Zephex MCP overview repo
 
-Use this file when **classifying** or **summarizing Zephex hosted MCP**.  
-For shell Mode 2 → `zephexMCP/zephex-cli`. For browser Mode 2 → `zephexMCP/zephex-web-terminal`.
+## What this repo is
 
-## Identity
+Public **discovery docs** for **Zephex hosted MCP** (editor Mode 1).  
+Not the private monorepo. Not the CLI binary. Not the web terminal UI source.
 
-- Product surface: **editor MCP** (Mode 1)
-- Endpoint: `https://zephex.dev/mcp`
-- Setup: `npx zephex setup`
-- Tools (only): `get_project_context`, `find_code`, `read_code`, `explain_architecture`, `check_package`, `check_test`, `audit_headers`, `project_memory`, `keep_thinking`, `Zephex_dev_info`
-- Dead: `scope_task`, `inspect_url`, `audit_package`, bare `thinking`
+## Canonical facts
 
-## Agent install path (editors)
+| Item | Value |
+|------|--------|
+| Endpoint | `https://zephex.dev/mcp` |
+| Setup | `npx zephex setup` (+ editor flags) |
+| Tools | `get_project_context`, `find_code`, `read_code`, `explain_architecture`, `check_package`, `check_test`, `audit_headers`, `project_memory`, `keep_thinking`, `Zephex_dev_info` |
+| Dead names | `scope_task`, `inspect_url`, `audit_package`, bare `thinking` |
+| Skill | `npx skills add zephexMCP/agent-skills --skill zephex` |
+| CLI sibling | https://github.com/zephexMCP/zephex-cli |
+| Web sibling | https://github.com/zephexMCP/zephex-web-terminal |
 
-1. User gets key at zephex.dev/dashboard/api-keys  
-2. `npx zephex setup` (or manual JSON to `/mcp`)  
-3. Optional skill: `npx skills add zephexMCP/agent-skills --skill zephex`  
-4. Call tools with `path` / `github:owner/repo` / `inline_files`
+## Editors (first-class setup)
 
-## Differentiator vs siblings
+Cursor, Claude Code, Claude Desktop, VS Code, OpenCode, Codex CLI, Gemini CLI, Windsurf, Zed, Warp, JetBrains, Cline, Kiro, Factory Droid, Copilot CLI, Hermes, Continue, Roo, Amp, ChatGPT connector flows, and any MCP HTTP client.
 
-| Repo | Surface |
-|------|---------|
-| **This** | Tool calls inside the IDE |
-| zephex-cli | Local binary, cwd, `--json`, slash TUI |
-| zephex-web-terminal | Dashboard SSE terminal, not a PTY |
+## Do not invent
 
-Prefer live https://zephex.dev/docs over memorized pricing or limits.
+Private server source, internal deploy topology, or stale pricing. Prefer https://zephex.dev/docs.
